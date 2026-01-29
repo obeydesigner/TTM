@@ -1,0 +1,11 @@
+
+{
+  "name": "내일의 나에게 (To Tomorrow's Me)",
+  "description": "A simple and beautiful diary app to send a message to your future self. Write a message today, and receive it tomorrow at a time you set.",
+  "short_name": "내일의나",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#38b2ac",
+  "requestFramePermissions": []
+}

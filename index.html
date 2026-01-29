@@ -1,0 +1,344 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#38b2ac" />
+    <title>내일의 나에게</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Noto Sans KR', sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        overflow-x: hidden;
+      }
+      @keyframes animateGradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      .animated-gradient-bg {
+         background: linear-gradient(125deg, #a7f3d0, #99f6e4, #bae6fd, #ccfbf1, #d1fae5);
+         background-size: 400% 400%;
+         animation: animateGradient 20s ease infinite;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+      .safe-area-inset-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="animated-gradient-bg min-h-[100dvh]">
+    <div id="root"></div>
+    <script type="text/babel">
+
+const MESSAGE_PROMPTS = [
+  "내일의 너는 무엇을 하고 있을까? 궁금하네",
+  "오늘 있었던 일 중 기억하고 싶은 것은?",
+  "내일의 목표를 응원해 보세요!",
+  "오늘의 너에게 해주고 싶은 칭찬은?",
+  "내일은 더 좋은 하루가 될거야!",
+  "오늘 너 정말 고생 많았어.",
+];
+
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatDateForDisplay = (date) => {
+    const year = String(date.getFullYear()).slice(-2);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}.${month}.${day}`;
+};
+
+const Toast = ({ message, isVisible }) => (
+    <div className={`fixed top-12 left-1/2 -translate-x-1/2 z-[100] transition-all duration-500 transform ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-12 opacity-0'}`}>
+        <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-teal-100 flex items-center space-x-3">
+            <span className="text-teal-500 text-xl">✨</span>
+            <p className="text-gray-800 font-medium text-sm">{message}</p>
+        </div>
+    </div>
+);
+
+const SettingsIcon = ({ onClick }) => (
+    <button onClick={onClick} className="p-2 rounded-full active:scale-95 transition-transform bg-white/20">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    </button>
+);
+
+const TimePickerModal = ({ isOpen, onClose, time, setTime }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-end md:items-center z-[100] p-4" onClick={onClose}>
+            <div className="bg-white rounded-t-[3rem] md:rounded-[3rem] p-8 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-300" onClick={e => e.stopPropagation()}>
+                <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 md:hidden"></div>
+                <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">언제 메시지를 받을까요?</h3>
+                <div className="flex justify-center items-center space-x-6 mb-8">
+                    <div className="flex flex-col items-center">
+                        <select value={time.hour} onChange={e => setTime({ ...time, hour: parseInt(e.target.value) })} className="bg-gray-100 border-0 rounded-2xl px-6 py-4 text-2xl font-bold appearance-none text-center focus:ring-2 focus:ring-teal-400">
+                            {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}</option>)}
+                        </select>
+                        <span className="text-xs text-gray-400 mt-2 uppercase font-bold tracking-widest">Hour</span>
+                    </div>
+                    <span className="text-3xl font-bold text-gray-300">:</span>
+                    <div className="flex flex-col items-center">
+                        <select value={time.minute} onChange={e => setTime({ ...time, minute: parseInt(e.target.value) })} className="bg-gray-100 border-0 rounded-2xl px-6 py-4 text-2xl font-bold appearance-none text-center focus:ring-2 focus:ring-teal-400">
+                            {Array.from({ length: 60 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}</option>)}
+                        </select>
+                        <span className="text-xs text-gray-400 mt-2 uppercase font-bold tracking-widest">Min</span>
+                    </div>
+                </div>
+                <button
+                    onClick={onClose}
+                    className="w-full bg-teal-500 text-white font-bold py-5 rounded-2xl hover:bg-teal-600 active:scale-95 transition-all shadow-lg shadow-teal-200"
+                >
+                    이 시간에 받기
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const SettingsModal = ({ isOpen, onClose, profile, setProfile }) => {
+    if (!isOpen) return null;
+    const fileInputRef = React.useRef(null);
+    const handleImageChange = (event) => {
+        if (event.target.files && event.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => setProfile({ imageUrl: e.target?.result });
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    };
+    return (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[100] p-4" onClick={onClose}>
+            <div className="bg-white rounded-[3rem] p-8 w-full max-w-xs shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-gray-800 active:scale-90 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+                <h3 className="text-xl font-bold text-gray-800 mb-8 text-center">나의 프로필</h3>
+                <div className="flex flex-col items-center">
+                    <div className="relative group">
+                        <img
+                            src={profile.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky`}
+                            alt="Profile"
+                            className="w-28 h-28 rounded-full object-cover mb-6 border-4 border-teal-50 shadow-inner"
+                        />
+                        <button 
+                            onClick={() => fileInputRef.current?.click()}
+                            className="absolute bottom-6 right-0 bg-teal-500 text-white p-2 rounded-full shadow-lg border-2 border-white active:scale-90 transition-transform"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        </button>
+                    </div>
+                    <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} className="hidden" />
+                    <p className="text-gray-500 text-sm mb-4">내일 만날 나에게 멋진 모습을 보여주세요</p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function App() {
+    const { useState, useEffect, useCallback, useRef } = React;
+    
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [messages, setMessages] = useState({});
+    const [profile, setProfile] = useState({ imageUrl: null });
+    const [notificationTime, setNotificationTime] = useState({ hour: 8, minute: 0 });
+    const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [prompt, setPrompt] = useState('');
+    const [messageToSend, setMessageToSend] = useState('');
+    const [toast, setToast] = useState({ isVisible: false, message: '' });
+
+    const showToast = (msg) => {
+        setToast({ isVisible: true, message: msg });
+        setTimeout(() => setToast({ isVisible: false, message: '' }), 3000);
+    };
+
+    const loadData = useCallback(() => {
+        try {
+            const storedMessages = localStorage.getItem('messages');
+            if (storedMessages) setMessages(JSON.parse(storedMessages));
+            const storedProfile = localStorage.getItem('profile');
+            if (storedProfile) setProfile(JSON.parse(storedProfile));
+            const storedTime = localStorage.getItem('notificationTime');
+            if (storedTime) setNotificationTime(JSON.parse(storedTime));
+        } catch (error) { console.error(error); }
+    }, []);
+
+    useEffect(() => {
+        loadData();
+        setPrompt(MESSAGE_PROMPTS[Math.floor(Math.random() * MESSAGE_PROMPTS.length)]);
+    }, [loadData]);
+
+    useEffect(() => { localStorage.setItem('messages', JSON.stringify(messages)); }, [messages]);
+    useEffect(() => { localStorage.setItem('profile', JSON.stringify(profile)); }, [profile]);
+    useEffect(() => { localStorage.setItem('notificationTime', JSON.stringify(notificationTime)); }, [notificationTime]);
+
+    useEffect(() => {
+        const todayKey = formatDate(new Date());
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayKey = formatDate(yesterday);
+
+        if (messages[yesterdayKey]?.toTomorrow && !messages[todayKey]?.fromYesterday) {
+            showToast("어제의 내가 보낸 따뜻한 메시지가 도착했어요!");
+            setMessages(prev => ({
+                ...prev,
+                [todayKey]: { ...prev[todayKey], fromYesterday: messages[yesterdayKey].toTomorrow }
+            }));
+        }
+    }, [messages]);
+    
+    useEffect(() => {
+        const todayKey = formatDate(currentDate);
+        setMessageToSend(messages[todayKey]?.toTomorrow || '');
+    }, [currentDate, messages]);
+
+    const handleSaveMessage = () => {
+        if (!messageToSend.trim()) return;
+        const todayKey = formatDate(currentDate);
+        const tomorrow = new Date(currentDate);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowKey = formatDate(tomorrow);
+
+        setMessages(prev => ({
+            ...prev,
+            [todayKey]: { ...prev[todayKey], toTomorrow: messageToSend },
+            [tomorrowKey]: { ...prev[tomorrowKey], fromYesterday: messageToSend }
+        }));
+
+        showToast(`메시지 저장 완료! 내일 ${String(notificationTime.hour).padStart(2,'0')}:${String(notificationTime.minute).padStart(2,'0')}에 알려드릴게요.`);
+    };
+
+    const isToday = formatDate(currentDate) === formatDate(new Date());
+    const messageFromYesterday = messages[formatDate(currentDate)]?.fromYesterday || '';
+    
+    return (
+        <div className="flex flex-col h-full w-full max-w-md mx-auto relative px-6 pt-12 pb-8 safe-area-inset-bottom">
+            <Toast isVisible={toast.isVisible} message={toast.message} />
+            
+            <header className="flex items-center justify-between w-full mb-8">
+                <div className="flex items-center space-x-3">
+                    <img
+                        src={profile.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky`}
+                        alt="Profile"
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md active:scale-95 transition-transform"
+                        onClick={() => setIsSettingsOpen(true)}
+                    />
+                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">내일의 나에게</h1>
+                </div>
+                <SettingsIcon onClick={() => setIsSettingsOpen(true)} />
+            </header>
+
+            <div className="flex items-center justify-between mb-8 glass-card rounded-2xl p-1 shadow-sm">
+                <button onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate()-1)))} className="p-3 text-gray-500 active:text-teal-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <div className="text-gray-800 font-bold text-lg">{formatDateForDisplay(currentDate)}</div>
+                <button 
+                    onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate()+1)))}
+                    disabled={isToday}
+                    className={`p-3 transition-colors ${isToday ? 'opacity-20' : 'text-gray-500 active:text-teal-500'}`}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </button>
+            </div>
+
+            <main className="flex-1 overflow-y-auto space-y-6 pb-4">
+                <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <h2 className="text-sm font-bold text-gray-400 mb-3 px-1 uppercase tracking-widest">어제의 내가 보낸 편지</h2>
+                    <div className="glass-card rounded-[2.5rem] p-8 min-h-[140px] flex items-center justify-center shadow-lg relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-200 to-blue-200"></div>
+                        <p className="text-lg text-center font-medium leading-relaxed text-gray-700 italic">
+                            "{messageFromYesterday || prompt}"
+                        </p>
+                    </div>
+                </section>
+
+                <section className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+                    <h2 className="text-sm font-bold text-gray-400 mb-3 px-1 uppercase tracking-widest">내일의 나에게 쓰는 편지</h2>
+                    <div className="glass-card rounded-[2.5rem] p-1 flex flex-col shadow-lg overflow-hidden">
+                        <textarea
+                            value={messageToSend}
+                            onChange={(e) => setMessageToSend(e.target.value)}
+                            placeholder="내일의 너에게 어떤 말을 해주고 싶어?"
+                            className="w-full bg-transparent p-8 min-h-[180px] text-lg text-center placeholder-gray-400/80 border-0 focus:ring-0 resize-none font-medium"
+                        />
+                         <button
+                            onClick={() => setIsTimePickerOpen(true)}
+                            className="mx-4 mb-4 bg-white/40 border border-white/50 rounded-2xl py-3 text-sm font-semibold text-gray-600 active:bg-white/60 transition-colors flex items-center justify-center space-x-2"
+                        >
+                            <span>⏰</span>
+                            <span>{String(notificationTime.hour).padStart(2, '0')}:{String(notificationTime.minute).padStart(2, '0')}에 편지 도착</span>
+                        </button>
+                    </div>
+                </section>
+            </main>
+
+            <footer className="mt-6 flex flex-col space-y-3">
+                <button
+                    onClick={handleSaveMessage}
+                    disabled={!messageToSend.trim()}
+                    className={`w-full bg-teal-500 text-white rounded-[2rem] py-5 text-lg font-bold shadow-xl shadow-teal-200 transition-all active:scale-[0.98] ${!messageToSend.trim() ? 'opacity-30 cursor-not-allowed grayscale' : 'hover:bg-teal-600'}`}
+                >
+                    편지 보내기
+                </button>
+                <button className="w-full bg-white/40 backdrop-blur-sm border border-white/50 rounded-2xl py-4 flex items-center justify-center space-x-3 text-gray-500 font-semibold active:bg-white/60 transition-colors">
+                    <span className="text-xl">🎁</span>
+                    <span className="text-sm">나를 위한 오늘의 작은 선물</span>
+                </button>
+            </footer>
+
+            <TimePickerModal
+                isOpen={isTimePickerOpen}
+                onClose={() => setIsTimePickerOpen(false)}
+                time={notificationTime}
+                setTime={setNotificationTime}
+            />
+            <SettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                profile={profile}
+                setProfile={setProfile}
+            />
+        </div>
+    );
+}
+
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(<React.StrictMode><App /></React.StrictMode>);
+}
+    </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
