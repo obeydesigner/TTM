@@ -17,29 +17,26 @@
         font-family: 'Noto Sans KR', sans-serif;
         -webkit-tap-highlight-color: transparent;
         overflow-x: hidden;
+        background-color: #f8fbfb;
       }
-      @keyframes animateGradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+      .custom-card {
+        background: white;
+        border: 1px solid #edf2f2;
+        border-radius: 2rem;
+        box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
       }
-      .animated-gradient-bg {
-         background: linear-gradient(125deg, #a7f3d0, #99f6e4, #bae6fd, #ccfbf1, #d1fae5);
-         background-size: 400% 400%;
-         animation: animateGradient 20s ease infinite;
-      }
-      .glass-card {
-        background: rgba(255, 255, 255, 0.45);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
+      .unified-round {
+        border-radius: 2rem;
       }
       .safe-area-inset-bottom {
         padding-bottom: env(safe-area-inset-bottom);
       }
-      /* Hide scrollbar for Chrome, Safari and Opera */
+      /* Hide scrollbar */
       ::-webkit-scrollbar {
         display: none;
+      }
+      input, textarea, select, button {
+        outline: none !important;
       }
     </style>
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
@@ -47,7 +44,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="animated-gradient-bg min-h-[100dvh]">
+  <body class="min-h-[100dvh]">
     <div id="root"></div>
     <script type="text/babel">
 
@@ -59,6 +56,9 @@ const MESSAGE_PROMPTS = [
   "내일은 더 좋은 하루가 될거야!",
   "오늘 너 정말 고생 많았어.",
 ];
+
+// Simple user icon SVG as default
+const DEFAULT_PROFILE_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23cbd5e1' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
 const formatDate = (date) => {
   const year = date.getFullYear();
@@ -76,7 +76,7 @@ const formatDateForDisplay = (date) => {
 
 const Toast = ({ message, isVisible }) => (
     <div className={`fixed top-12 left-1/2 -translate-x-1/2 z-[100] transition-all duration-500 transform ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-12 opacity-0'}`}>
-        <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-teal-100 flex items-center space-x-3">
+        <div className="bg-white px-6 py-3 rounded-full shadow-2xl border border-teal-50 flex items-center space-x-3">
             <span className="text-teal-500 text-xl">✨</span>
             <p className="text-gray-800 font-medium text-sm">{message}</p>
         </div>
@@ -84,8 +84,8 @@ const Toast = ({ message, isVisible }) => (
 );
 
 const SettingsIcon = ({ onClick }) => (
-    <button onClick={onClick} className="p-2 rounded-full active:scale-95 transition-transform bg-white/20">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <button onClick={onClick} className="p-2 rounded-full active:scale-95 transition-transform bg-teal-50">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
@@ -95,20 +95,20 @@ const SettingsIcon = ({ onClick }) => (
 const TimePickerModal = ({ isOpen, onClose, time, setTime }) => {
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-end md:items-center z-[100] p-4" onClick={onClose}>
-            <div className="bg-white rounded-t-[3rem] md:rounded-[3rem] p-8 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-300" onClick={e => e.stopPropagation()}>
-                <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 md:hidden"></div>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-end md:items-center z-[100] p-4" onClick={onClose}>
+            <div className="bg-white unified-round p-8 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-300" onClick={e => e.stopPropagation()}>
+                <div className="w-12 h-1.5 bg-gray-100 rounded-full mx-auto mb-6 md:hidden"></div>
                 <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">언제 메시지를 받을까요?</h3>
                 <div className="flex justify-center items-center space-x-6 mb-8">
                     <div className="flex flex-col items-center">
-                        <select value={time.hour} onChange={e => setTime({ ...time, hour: parseInt(e.target.value) })} className="bg-gray-100 border-0 rounded-2xl px-6 py-4 text-2xl font-bold appearance-none text-center focus:ring-2 focus:ring-teal-400">
+                        <select value={time.hour} onChange={e => setTime({ ...time, hour: parseInt(e.target.value) })} className="bg-gray-50 border-0 unified-round px-6 py-4 text-2xl font-bold appearance-none text-center focus:ring-2 focus:ring-teal-400">
                             {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}</option>)}
                         </select>
                         <span className="text-xs text-gray-400 mt-2 uppercase font-bold tracking-widest">Hour</span>
                     </div>
-                    <span className="text-3xl font-bold text-gray-300">:</span>
+                    <span className="text-3xl font-bold text-gray-200">:</span>
                     <div className="flex flex-col items-center">
-                        <select value={time.minute} onChange={e => setTime({ ...time, minute: parseInt(e.target.value) })} className="bg-gray-100 border-0 rounded-2xl px-6 py-4 text-2xl font-bold appearance-none text-center focus:ring-2 focus:ring-teal-400">
+                        <select value={time.minute} onChange={e => setTime({ ...time, minute: parseInt(e.target.value) })} className="bg-gray-50 border-0 unified-round px-6 py-4 text-2xl font-bold appearance-none text-center focus:ring-2 focus:ring-teal-400">
                             {Array.from({ length: 60 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}</option>)}
                         </select>
                         <span className="text-xs text-gray-400 mt-2 uppercase font-bold tracking-widest">Min</span>
@@ -116,9 +116,9 @@ const TimePickerModal = ({ isOpen, onClose, time, setTime }) => {
                 </div>
                 <button
                     onClick={onClose}
-                    className="w-full bg-teal-500 text-white font-bold py-5 rounded-2xl hover:bg-teal-600 active:scale-95 transition-all shadow-lg shadow-teal-200"
+                    className="w-full bg-teal-500 text-white font-bold py-5 unified-round hover:bg-teal-600 active:scale-95 transition-all shadow-lg shadow-teal-100"
                 >
-                    이 시간에 받기
+                    확인
                 </button>
             </div>
         </div>
@@ -136,19 +136,21 @@ const SettingsModal = ({ isOpen, onClose, profile, setProfile }) => {
         }
     };
     return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[100] p-4" onClick={onClose}>
-            <div className="bg-white rounded-[3rem] p-8 w-full max-w-xs shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-gray-800 active:scale-90 transition-transform">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-center z-[100] p-4" onClick={onClose}>
+            <div className="bg-white unified-round p-8 w-full max-w-xs shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                <button onClick={onClose} className="absolute top-6 right-6 text-gray-300 hover:text-gray-800 active:scale-90 transition-transform">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
                 <h3 className="text-xl font-bold text-gray-800 mb-8 text-center">나의 프로필</h3>
                 <div className="flex flex-col items-center">
                     <div className="relative group">
-                        <img
-                            src={profile.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky`}
-                            alt="Profile"
-                            className="w-28 h-28 rounded-full object-cover mb-6 border-4 border-teal-50 shadow-inner"
-                        />
+                        <div className="w-28 h-28 rounded-full overflow-hidden mb-6 border-4 border-teal-50 shadow-sm bg-gray-50 flex items-center justify-center">
+                            <img
+                                src={profile.imageUrl || DEFAULT_PROFILE_IMAGE}
+                                alt="Profile"
+                                className={`w-full h-full object-cover ${!profile.imageUrl ? 'scale-75 opacity-50' : ''}`}
+                            />
+                        </div>
                         <button 
                             onClick={() => fileInputRef.current?.click()}
                             className="absolute bottom-6 right-0 bg-teal-500 text-white p-2 rounded-full shadow-lg border-2 border-white active:scale-90 transition-transform"
@@ -157,7 +159,7 @@ const SettingsModal = ({ isOpen, onClose, profile, setProfile }) => {
                         </button>
                     </div>
                     <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} className="hidden" />
-                    <p className="text-gray-500 text-sm mb-4">내일 만날 나에게 멋진 모습을 보여주세요</p>
+                    <p className="text-gray-400 text-sm mb-4">프로필 사진을 변경해 보세요</p>
                 </div>
             </div>
         </div>
@@ -165,7 +167,7 @@ const SettingsModal = ({ isOpen, onClose, profile, setProfile }) => {
 }
 
 function App() {
-    const { useState, useEffect, useCallback, useRef } = React;
+    const { useState, useEffect, useCallback } = React;
     
     const [currentDate, setCurrentDate] = useState(new Date());
     const [messages, setMessages] = useState({});
@@ -209,7 +211,7 @@ function App() {
         const yesterdayKey = formatDate(yesterday);
 
         if (messages[yesterdayKey]?.toTomorrow && !messages[todayKey]?.fromYesterday) {
-            showToast("어제의 내가 보낸 따뜻한 메시지가 도착했어요!");
+            showToast("어제의 나로부터 편지가 도착했어요!");
             setMessages(prev => ({
                 ...prev,
                 [todayKey]: { ...prev[todayKey], fromYesterday: messages[yesterdayKey].toTomorrow }
@@ -235,69 +237,72 @@ function App() {
             [tomorrowKey]: { ...prev[tomorrowKey], fromYesterday: messageToSend }
         }));
 
-        showToast(`메시지 저장 완료! 내일 ${String(notificationTime.hour).padStart(2,'0')}:${String(notificationTime.minute).padStart(2,'0')}에 알려드릴게요.`);
+        showToast(`내일 ${String(notificationTime.hour).padStart(2,'0')}:${String(notificationTime.minute).padStart(2,'0')}에 전해줄게요.`);
     };
 
     const isToday = formatDate(currentDate) === formatDate(new Date());
     const messageFromYesterday = messages[formatDate(currentDate)]?.fromYesterday || '';
     
     return (
-        <div className="flex flex-col h-full w-full max-w-md mx-auto relative px-6 pt-12 pb-8 safe-area-inset-bottom">
+        <div className="flex flex-col h-full w-full max-w-md mx-auto relative px-6 pt-10 pb-8 safe-area-inset-bottom">
             <Toast isVisible={toast.isVisible} message={toast.message} />
             
             <header className="flex items-center justify-between w-full mb-8">
                 <div className="flex items-center space-x-3">
-                    <img
-                        src={profile.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky`}
-                        alt="Profile"
-                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md active:scale-95 transition-transform"
+                    <div 
+                        className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm active:scale-95 transition-transform bg-gray-50 flex items-center justify-center cursor-pointer"
                         onClick={() => setIsSettingsOpen(true)}
-                    />
+                    >
+                        <img
+                            src={profile.imageUrl || DEFAULT_PROFILE_IMAGE}
+                            alt="Profile"
+                            className={`w-full h-full object-cover ${!profile.imageUrl ? 'scale-75 opacity-30' : ''}`}
+                        />
+                    </div>
                     <h1 className="text-xl font-bold text-gray-800 tracking-tight">내일의 나에게</h1>
                 </div>
                 <SettingsIcon onClick={() => setIsSettingsOpen(true)} />
             </header>
 
-            <div className="flex items-center justify-between mb-8 glass-card rounded-2xl p-1 shadow-sm">
-                <button onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate()-1)))} className="p-3 text-gray-500 active:text-teal-500 transition-colors">
+            <div className="flex items-center justify-between mb-8 custom-card p-1">
+                <button onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate()-1)))} className="p-3 text-gray-400 active:text-teal-500 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 </button>
                 <div className="text-gray-800 font-bold text-lg">{formatDateForDisplay(currentDate)}</div>
                 <button 
                     onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate()+1)))}
                     disabled={isToday}
-                    className={`p-3 transition-colors ${isToday ? 'opacity-20' : 'text-gray-500 active:text-teal-500'}`}
+                    className={`p-3 transition-colors ${isToday ? 'opacity-20' : 'text-gray-400 active:text-teal-500'}`}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
 
             <main className="flex-1 overflow-y-auto space-y-6 pb-4">
-                <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <h2 className="text-sm font-bold text-gray-400 mb-3 px-1 uppercase tracking-widest">어제의 내가 보낸 편지</h2>
-                    <div className="glass-card rounded-[2.5rem] p-8 min-h-[140px] flex items-center justify-center shadow-lg relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-200 to-blue-200"></div>
+                <section>
+                    <h2 className="text-xs font-bold text-gray-400 mb-3 px-1 uppercase tracking-widest">어제의 나로부터</h2>
+                    <div className="custom-card p-8 min-h-[140px] flex items-center justify-center relative overflow-hidden">
                         <p className="text-lg text-center font-medium leading-relaxed text-gray-700 italic">
                             "{messageFromYesterday || prompt}"
                         </p>
                     </div>
                 </section>
 
-                <section className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-                    <h2 className="text-sm font-bold text-gray-400 mb-3 px-1 uppercase tracking-widest">내일의 나에게 쓰는 편지</h2>
-                    <div className="glass-card rounded-[2.5rem] p-1 flex flex-col shadow-lg overflow-hidden">
+                <section>
+                    <h2 className="text-xs font-bold text-gray-400 mb-3 px-1 uppercase tracking-widest">내일의 나에게</h2>
+                    <div className="custom-card p-1 flex flex-col overflow-hidden">
                         <textarea
                             value={messageToSend}
                             onChange={(e) => setMessageToSend(e.target.value)}
-                            placeholder="내일의 너에게 어떤 말을 해주고 싶어?"
-                            className="w-full bg-transparent p-8 min-h-[180px] text-lg text-center placeholder-gray-400/80 border-0 focus:ring-0 resize-none font-medium"
+                            placeholder="내일의 너에게 하고 싶은 말..."
+                            className="w-full bg-transparent p-8 min-h-[180px] text-lg text-center placeholder-gray-300 border-0 focus:ring-0 resize-none font-medium"
                         />
                          <button
                             onClick={() => setIsTimePickerOpen(true)}
-                            className="mx-4 mb-4 bg-white/40 border border-white/50 rounded-2xl py-3 text-sm font-semibold text-gray-600 active:bg-white/60 transition-colors flex items-center justify-center space-x-2"
+                            className="mx-4 mb-4 bg-gray-50 unified-round py-3 text-sm font-semibold text-gray-500 active:bg-gray-100 transition-colors flex items-center justify-center space-x-2"
                         >
                             <span>⏰</span>
-                            <span>{String(notificationTime.hour).padStart(2, '0')}:{String(notificationTime.minute).padStart(2, '0')}에 편지 도착</span>
+                            <span>{String(notificationTime.hour).padStart(2, '0')}:{String(notificationTime.minute).padStart(2, '0')} 전송 예약됨</span>
                         </button>
                     </div>
                 </section>
@@ -307,13 +312,13 @@ function App() {
                 <button
                     onClick={handleSaveMessage}
                     disabled={!messageToSend.trim()}
-                    className={`w-full bg-teal-500 text-white rounded-[2rem] py-5 text-lg font-bold shadow-xl shadow-teal-200 transition-all active:scale-[0.98] ${!messageToSend.trim() ? 'opacity-30 cursor-not-allowed grayscale' : 'hover:bg-teal-600'}`}
+                    className={`w-full bg-teal-500 text-white unified-round py-5 text-lg font-bold shadow-lg shadow-teal-50 transition-all active:scale-[0.98] ${!messageToSend.trim() ? 'opacity-30 cursor-not-allowed' : 'hover:bg-teal-600'}`}
                 >
-                    편지 보내기
+                    편지 저장하기
                 </button>
-                <button className="w-full bg-white/40 backdrop-blur-sm border border-white/50 rounded-2xl py-4 flex items-center justify-center space-x-3 text-gray-500 font-semibold active:bg-white/60 transition-colors">
+                <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-center space-x-3 text-gray-400 font-semibold active:bg-gray-50 transition-colors">
                     <span className="text-xl">🎁</span>
-                    <span className="text-sm">나를 위한 오늘의 작은 선물</span>
+                    <span className="text-sm">오늘 하루 수고했어</span>
                 </button>
             </footer>
 
