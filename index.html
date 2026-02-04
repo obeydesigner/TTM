@@ -44,7 +44,7 @@
         left: 0;
         right: 0;
         background: white;
-        height: calc(75px + env(safe-area-inset-bottom));
+        height: calc(70px + env(safe-area-inset-bottom));
         display: flex;
         justify-content: space-around;
         align-items: center;
@@ -220,7 +220,7 @@ function LetterTab({
     messageToSend, setMessageToSend, setIsTimePickerOpen, notificationTime, handleSaveMessage, isSaved 
 }) {
     return (
-        <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+        <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 overflow-y-auto">
             <header className="flex items-center justify-between w-full pt-8 mb-4">
                 <h1 className="text-2xl font-bold text-gray-800 tracking-tight">나의 편지함</h1>
             </header>
@@ -239,7 +239,7 @@ function LetterTab({
                 </button>
             </div>
 
-            <main className="flex-1 flex flex-col space-y-4 overflow-hidden">
+            <main className="flex flex-col space-y-4">
                 <section>
                     <h2 className="text-[10px] font-bold text-gray-400 mb-2 px-1 uppercase tracking-widest">어제의 나로부터</h2>
                     <div className="custom-card p-6 min-h-[100px] flex items-center justify-center relative overflow-hidden bg-teal-50/30">
@@ -249,23 +249,23 @@ function LetterTab({
                     </div>
                 </section>
 
-                <section className="flex-1 flex flex-col min-h-0">
+                <section className="flex flex-col">
                     <div className="flex justify-between items-center mb-2 px-1">
                         <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">내일의 나에게</h2>
                         {isSaved && <span className="text-[10px] font-bold text-teal-500 animate-pulse">✓ 부치기 완료</span>}
                     </div>
-                    <div className={`custom-card p-1 flex-1 flex flex-col overflow-hidden transition-colors ${isSaved ? 'bg-gray-50' : 'bg-white'}`}>
+                    <div className={`custom-card p-1 h-48 flex flex-col overflow-hidden transition-colors ${isSaved ? 'bg-gray-50' : 'bg-white'}`}>
                         <textarea
                             value={messageToSend}
                             onChange={(e) => setMessageToSend(e.target.value)}
                             readOnly={isSaved}
                             placeholder="내일의 너에게 하고 싶은 말..."
-                            className={`w-full flex-1 bg-transparent p-6 text-base text-center placeholder-gray-300 border-0 focus:ring-0 resize-none font-medium transition-all ${isSaved ? 'text-gray-400' : 'text-gray-800'}`}
+                            className={`w-full flex-1 bg-transparent p-6 text-sm text-center placeholder-gray-300 border-0 focus:ring-0 resize-none font-medium transition-all ${isSaved ? 'text-gray-400' : 'text-gray-800'}`}
                         />
                          <button
                             onClick={() => !isSaved && setIsTimePickerOpen(true)}
                             disabled={isSaved}
-                            className={`mx-3 mb-3 unified-round py-2.5 text-xs font-semibold flex items-center justify-center space-x-2 border ${isSaved ? 'bg-gray-100 text-gray-300 border-transparent cursor-default' : 'bg-gray-50 text-gray-500 active:bg-gray-100 border-gray-100 transition-colors'}`}
+                            className={`mx-3 mb-3 unified-round py-2 text-[10px] font-semibold flex items-center justify-center space-x-2 border ${isSaved ? 'bg-gray-100 text-gray-300 border-transparent cursor-default' : 'bg-gray-50 text-gray-500 active:bg-gray-100 border-gray-100 transition-colors'}`}
                         >
                             <span>⏰</span>
                             <span>{String(notificationTime.hour).padStart(2, '0')}:{String(notificationTime.minute).padStart(2, '0')} 전송 예약</span>
@@ -273,7 +273,7 @@ function LetterTab({
                     </div>
                 </section>
                 
-                <div className="flex flex-col items-center space-y-2 mb-4">
+                <div className="flex flex-col items-center space-y-2 mb-8">
                     <button
                         onClick={handleSaveMessage}
                         disabled={isSaved || !messageToSend.trim()}
@@ -303,7 +303,7 @@ function ProfileTab({ profile, setProfile, onLogout, messagesCount, userEmail })
     };
 
     return (
-        <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+        <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 overflow-y-auto">
              <header className="pt-8 mb-6 flex justify-between items-center px-2">
                 <h1 className="text-2xl font-bold text-gray-800">마이 페이지</h1>
                 <button onClick={onLogout} className="text-gray-400 font-bold text-sm hover:text-red-400 transition-colors">로그아웃</button>
@@ -341,7 +341,7 @@ function ProfileTab({ profile, setProfile, onLogout, messagesCount, userEmail })
                 </div>
             </div>
 
-            <div className="flex-1 space-y-3 min-h-0 overflow-hidden">
+            <div className="flex-1 space-y-3 min-h-0">
                 <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-between px-6 text-gray-600 font-semibold active:bg-gray-50 transition-colors shadow-sm text-sm">
                     <span className="flex items-center space-x-3"><span>🔔</span> <span>알림 설정</span></span>
                     <span className="text-gray-300">❯</span>
@@ -518,24 +518,24 @@ function App() {
             <nav className="tab-bar">
                 <button 
                     onClick={() => setActiveTab('letter')}
-                    className={`flex flex-col items-center justify-center w-20 h-full transition-all duration-300 ${activeTab === 'letter' ? 'scale-110' : 'opacity-40 grayscale'}`}
+                    className={`flex flex-col items-center justify-center w-20 h-full transition-all duration-300 ${activeTab === 'letter' ? 'scale-105' : 'opacity-40 grayscale'}`}
                 >
-                    <span className="text-3xl mb-1">✉️</span>
-                    <span className={`text-[10px] font-bold ${activeTab === 'letter' ? 'text-teal-600' : 'text-gray-400'}`}>편지</span>
+                    <span className="text-xl mb-1">✉️</span>
+                    <span className={`text-[9px] font-bold ${activeTab === 'letter' ? 'text-teal-600' : 'text-gray-400'}`}>편지</span>
                 </button>
                 <button 
                     onClick={() => setActiveTab('board')}
-                    className={`flex flex-col items-center justify-center w-20 h-full transition-all duration-300 ${activeTab === 'board' ? 'scale-110' : 'opacity-40 grayscale'}`}
+                    className={`flex flex-col items-center justify-center w-20 h-full transition-all duration-300 ${activeTab === 'board' ? 'scale-105' : 'opacity-40 grayscale'}`}
                 >
-                    <span className="text-3xl mb-1">📋</span>
-                    <span className={`text-[10px] font-bold ${activeTab === 'board' ? 'text-teal-600' : 'text-gray-400'}`}>게시판</span>
+                    <span className="text-xl mb-1">📋</span>
+                    <span className={`text-[9px] font-bold ${activeTab === 'board' ? 'text-teal-600' : 'text-gray-400'}`}>게시판</span>
                 </button>
                 <button 
                     onClick={() => setActiveTab('profile')}
-                    className={`flex flex-col items-center justify-center w-20 h-full transition-all duration-300 ${activeTab === 'profile' ? 'scale-110' : 'opacity-40 grayscale'}`}
+                    className={`flex flex-col items-center justify-center w-20 h-full transition-all duration-300 ${activeTab === 'profile' ? 'scale-105' : 'opacity-40 grayscale'}`}
                 >
-                    <span className="text-3xl mb-1">👤</span>
-                    <span className={`text-[10px] font-bold ${activeTab === 'profile' ? 'text-teal-600' : 'text-gray-400'}`}>프로필</span>
+                    <span className="text-xl mb-1">👤</span>
+                    <span className={`text-[9px] font-bold ${activeTab === 'profile' ? 'text-teal-600' : 'text-gray-400'}`}>프로필</span>
                 </button>
             </nav>
 
