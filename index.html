@@ -217,7 +217,7 @@ function BoardTab() {
 
 function LetterTab({ 
     currentDate, setCurrentDate, isToday, messageFromYesterday, prompt, 
-    messageToSend, setMessageToSend, setIsTimePickerOpen, notificationTime, handleSaveMessage 
+    messageToSend, setMessageToSend, setIsTimePickerOpen, notificationTime, handleSaveMessage, isSaved 
 }) {
     return (
         <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
@@ -242,7 +242,7 @@ function LetterTab({
             <main className="flex-1 flex flex-col space-y-4 overflow-hidden">
                 <section>
                     <h2 className="text-[10px] font-bold text-gray-400 mb-2 px-1 uppercase tracking-widest">어제의 나로부터</h2>
-                    <div className="custom-card p-6 min-h-[100px] flex items-center justify-center relative overflow-hidden">
+                    <div className="custom-card p-6 min-h-[100px] flex items-center justify-center relative overflow-hidden bg-teal-50/30">
                         <p className="text-base text-center font-medium leading-relaxed text-gray-600 italic">
                             "{messageFromYesterday || prompt}"
                         </p>
@@ -250,17 +250,22 @@ function LetterTab({
                 </section>
 
                 <section className="flex-1 flex flex-col min-h-0">
-                    <h2 className="text-[10px] font-bold text-gray-400 mb-2 px-1 uppercase tracking-widest">내일의 나에게</h2>
-                    <div className="custom-card p-1 flex-1 flex flex-col overflow-hidden">
+                    <div className="flex justify-between items-center mb-2 px-1">
+                        <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">내일의 나에게</h2>
+                        {isSaved && <span className="text-[10px] font-bold text-teal-500 animate-pulse">✓ 부치기 완료</span>}
+                    </div>
+                    <div className={`custom-card p-1 flex-1 flex flex-col overflow-hidden transition-colors ${isSaved ? 'bg-gray-50' : 'bg-white'}`}>
                         <textarea
                             value={messageToSend}
                             onChange={(e) => setMessageToSend(e.target.value)}
+                            readOnly={isSaved}
                             placeholder="내일의 너에게 하고 싶은 말..."
-                            className="w-full flex-1 bg-transparent p-6 text-base text-center placeholder-gray-300 border-0 focus:ring-0 resize-none font-medium text-gray-800"
+                            className={`w-full flex-1 bg-transparent p-6 text-base text-center placeholder-gray-300 border-0 focus:ring-0 resize-none font-medium transition-all ${isSaved ? 'text-gray-400' : 'text-gray-800'}`}
                         />
                          <button
-                            onClick={() => setIsTimePickerOpen(true)}
-                            className="mx-3 mb-3 bg-gray-50 unified-round py-2.5 text-xs font-semibold text-gray-500 active:bg-gray-100 transition-colors flex items-center justify-center space-x-2 border border-gray-100"
+                            onClick={() => !isSaved && setIsTimePickerOpen(true)}
+                            disabled={isSaved}
+                            className={`mx-3 mb-3 unified-round py-2.5 text-xs font-semibold flex items-center justify-center space-x-2 border ${isSaved ? 'bg-gray-100 text-gray-300 border-transparent cursor-default' : 'bg-gray-50 text-gray-500 active:bg-gray-100 border-gray-100 transition-colors'}`}
                         >
                             <span>⏰</span>
                             <span>{String(notificationTime.hour).padStart(2, '0')}:{String(notificationTime.minute).padStart(2, '0')} 전송 예약</span>
@@ -268,13 +273,20 @@ function LetterTab({
                     </div>
                 </section>
                 
-                <button
-                    onClick={handleSaveMessage}
-                    disabled={!messageToSend.trim()}
-                    className={`w-full bg-teal-500 text-white unified-round py-4 text-lg font-bold shadow-lg shadow-teal-50 transition-all active:scale-[0.98] mb-4 ${!messageToSend.trim() ? 'opacity-30 cursor-not-allowed' : 'hover:bg-teal-600'}`}
-                >
-                    편지 저장하기
-                </button>
+                <div className="flex flex-col items-center space-y-2 mb-4">
+                    <button
+                        onClick={handleSaveMessage}
+                        disabled={isSaved || !messageToSend.trim()}
+                        className={`w-full unified-round py-4 text-lg font-bold shadow-lg transition-all active:scale-[0.98] ${isSaved ? 'bg-gray-200 text-gray-400 shadow-none cursor-not-allowed' : 'bg-teal-500 text-white shadow-teal-50 hover:bg-teal-600 disabled:opacity-30'}`}
+                    >
+                        {isSaved ? '편지 부치기 완료' : '편지 저장하기'}
+                    </button>
+                    {isSaved && (
+                        <p className="text-[11px] text-gray-400 font-medium">
+                            내일 <span className="text-teal-500 font-bold">{String(notificationTime.hour).padStart(2, '0')}시 {String(notificationTime.minute).padStart(2, '0')}분</span>에 보내드릴게요
+                        </p>
+                    )}
+                </div>
             </main>
         </div>
     );
@@ -330,16 +342,16 @@ function ProfileTab({ profile, setProfile, onLogout, messagesCount, userEmail })
             </div>
 
             <div className="flex-1 space-y-3 min-h-0 overflow-hidden">
-                <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-between px-6 text-gray-600 font-semibold active:bg-gray-50 transition-colors shadow-sm">
-                    <span className="flex items-center space-x-3 text-sm"><span>🔔</span> <span>알림 설정</span></span>
+                <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-between px-6 text-gray-600 font-semibold active:bg-gray-50 transition-colors shadow-sm text-sm">
+                    <span className="flex items-center space-x-3"><span>🔔</span> <span>알림 설정</span></span>
                     <span className="text-gray-300">❯</span>
                 </button>
-                <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-between px-6 text-gray-600 font-semibold active:bg-gray-50 transition-colors shadow-sm">
-                    <span className="flex items-center space-x-3 text-sm"><span>💎</span> <span>프리미엄 혜택</span></span>
+                <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-between px-6 text-gray-600 font-semibold active:bg-gray-50 transition-colors shadow-sm text-sm">
+                    <span className="flex items-center space-x-3"><span>💎</span> <span>프리미엄 혜택</span></span>
                     <span className="text-gray-300">❯</span>
                 </button>
-                <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-between px-6 text-gray-600 font-semibold active:bg-gray-50 transition-colors shadow-sm">
-                    <span className="flex items-center space-x-3 text-sm"><span>📜</span> <span>공지사항</span></span>
+                <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-between px-6 text-gray-600 font-semibold active:bg-gray-50 transition-colors shadow-sm text-sm">
+                    <span className="flex items-center space-x-3"><span>📜</span> <span>공지사항</span></span>
                     <span className="text-gray-300">❯</span>
                 </button>
             </div>
@@ -441,7 +453,7 @@ function App() {
             [tomorrowKey]: { ...prev[tomorrowKey], fromYesterday: messageToSend }
         }));
 
-        showToast(`내일 ${String(notificationTime.hour).padStart(2,'0')}:${String(notificationTime.minute).padStart(2,'0')}에 전해줄게요.`);
+        showToast("편지가 안전하게 부쳐졌습니다.");
     };
 
     const handleLoginSuccess = (user) => {
@@ -465,8 +477,10 @@ function App() {
         );
     }
 
-    const isToday = formatDate(currentDate) === formatDate(new Date());
-    const messageFromYesterday = messages[formatDate(currentDate)]?.fromYesterday || '';
+    const todayKey = formatDate(currentDate);
+    const isToday = todayKey === formatDate(new Date());
+    const isSaved = !!messages[todayKey]?.toTomorrow;
+    const messageFromYesterday = messages[todayKey]?.fromYesterday || '';
     const messagesCount = Object.keys(messages).filter(k => messages[k].toTomorrow).length;
     
     return (
@@ -479,6 +493,7 @@ function App() {
                         currentDate={currentDate}
                         setCurrentDate={setCurrentDate}
                         isToday={isToday}
+                        isSaved={isSaved}
                         messageFromYesterday={messageFromYesterday}
                         prompt={prompt}
                         messageToSend={messageToSend}
