@@ -16,8 +16,9 @@
       body {
         font-family: 'Noto Sans KR', sans-serif;
         -webkit-tap-highlight-color: transparent;
-        overflow-x: hidden;
+        overflow: hidden;
         background-color: #f8fbfb;
+        height: 100dvh;
       }
       .custom-card {
         background: white;
@@ -31,12 +32,28 @@
       .safe-area-inset-bottom {
         padding-bottom: env(safe-area-inset-bottom);
       }
-      /* Hide scrollbar */
       ::-webkit-scrollbar {
         display: none;
       }
       input, textarea, select, button {
         outline: none !important;
+      }
+      .tab-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        height: calc(75px + env(safe-area-inset-bottom));
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        border-top: 1px solid #f0f4f4;
+        padding-bottom: env(safe-area-inset-bottom);
+        z-index: 50;
+      }
+      #root {
+        height: 100%;
       }
     </style>
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
@@ -44,7 +61,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="min-h-[100dvh]">
+  <body class="h-[100dvh]">
     <div id="root"></div>
     <script type="text/babel">
 
@@ -57,7 +74,15 @@ const MESSAGE_PROMPTS = [
   "오늘 너 정말 고생 많았어.",
 ];
 
-// Simple user icon SVG as default
+const BOARD_MESSAGES = [
+    { id: 1, user: "익명1", text: "오늘도 당신은 충분히 잘 해냈어요. 내일은 더 편안한 하루가 되길.", date: "2시간 전" },
+    { id: 2, user: "익명2", text: "실수해도 괜찮아요. 내일은 또 다른 기회가 찾아올 테니까요.", date: "4시간 전" },
+    { id: 3, user: "익명3", text: "나 자신을 좀 더 사랑해주는 연습을 하고 있어요. 여러분도 힘내세요!", date: "어제" },
+    { id: 4, user: "익명4", text: "따뜻한 커피 한 잔에 행복을 느끼는 소박한 내일이 되기를.", date: "어제" },
+    { id: 5, user: "익명5", text: "힘든 일은 오늘로 다 털어버려요.", date: "어제" },
+    { id: 6, user: "익명6", text: "웃는 얼굴로 내일을 맞이하기를.", date: "2일 전" },
+];
+
 const DEFAULT_PROFILE_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23cbd5e1' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
 const formatDate = (date) => {
@@ -83,50 +108,179 @@ const Toast = ({ message, isVisible }) => (
     </div>
 );
 
-const SettingsIcon = ({ onClick }) => (
-    <button onClick={onClick} className="p-2 rounded-full active:scale-95 transition-transform bg-teal-50">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-    </button>
-);
+function AuthScreen({ onLoginSuccess }) {
+    const [isSignUp, setIsSignUp] = React.useState(false);
+    const [email, setEmail] = React.useState('');
+    const [password, setPassword] = React.useState('');
+    const [error, setError] = React.useState('');
 
-const TimePickerModal = ({ isOpen, onClose, time, setTime }) => {
-    if (!isOpen) return null;
+    const handleSubmit = () => {
+        if (!email || !password) {
+            setError('모든 필드를 입력해주세요.');
+            return;
+        }
+
+        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+
+        if (isSignUp) {
+            if (storedUsers.some(u => u.email === email)) {
+                setError('이미 존재하는 이메일입니다.');
+                return;
+            }
+            const newUser = { id: Date.now().toString(), email, password };
+            localStorage.setItem('users', JSON.stringify([...storedUsers, newUser]));
+            alert('회원가입이 완료되었습니다! 로그인을 해주세요.');
+            setIsSignUp(false);
+            setError('');
+        } else {
+            const user = storedUsers.find(u => u.email === email && u.password === password);
+            if (user) {
+                onLoginSuccess(user);
+            } else {
+                setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+            }
+        }
+    };
+
     return (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-end md:items-center z-[100] p-4" onClick={onClose}>
-            <div className="bg-white unified-round p-8 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-300" onClick={e => e.stopPropagation()}>
-                <div className="w-12 h-1.5 bg-gray-100 rounded-full mx-auto mb-6 md:hidden"></div>
-                <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">언제 메시지를 받을까요?</h3>
-                <div className="flex justify-center items-center space-x-6 mb-8">
-                    <div className="flex flex-col items-center">
-                        <select value={time.hour} onChange={e => setTime({ ...time, hour: parseInt(e.target.value) })} className="bg-gray-50 border-0 unified-round px-6 py-4 text-2xl font-bold appearance-none text-center focus:ring-2 focus:ring-teal-400">
-                            {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}</option>)}
-                        </select>
-                        <span className="text-xs text-gray-400 mt-2 uppercase font-bold tracking-widest">Hour</span>
-                    </div>
-                    <span className="text-3xl font-bold text-gray-200">:</span>
-                    <div className="flex flex-col items-center">
-                        <select value={time.minute} onChange={e => setTime({ ...time, minute: parseInt(e.target.value) })} className="bg-gray-50 border-0 unified-round px-6 py-4 text-2xl font-bold appearance-none text-center focus:ring-2 focus:ring-teal-400">
-                            {Array.from({ length: 60 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}</option>)}
-                        </select>
-                        <span className="text-xs text-gray-400 mt-2 uppercase font-bold tracking-widest">Min</span>
-                    </div>
+        <div className="flex flex-col h-full w-full max-w-md mx-auto px-8 justify-center animate-in fade-in duration-700">
+            <div className="text-center mb-10">
+                <div className="w-16 h-16 bg-teal-500 rounded-[1.5rem] mx-auto mb-4 flex items-center justify-center shadow-xl shadow-teal-100">
+                    <span className="text-3xl">✉️</span>
                 </div>
+                <h1 className="text-2xl font-bold text-gray-800 mb-1">내일의 나에게</h1>
+                <p className="text-gray-500 text-sm">{isSignUp ? '새로운 여정을 시작해보세요' : '당신의 내일을 응원하는 편지'}</p>
+            </div>
+            
+            <div className="space-y-4">
+                <div className="space-y-1">
+                    <input
+                        type="email"
+                        placeholder="이메일 주소"
+                        value={email}
+                        onChange={(e) => {setEmail(e.target.value); setError('');}}
+                        className="w-full bg-white border border-gray-200 py-4 px-6 unified-round text-base text-gray-800 placeholder-gray-400 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all shadow-sm"
+                    />
+                </div>
+                <div className="space-y-1">
+                    <input
+                        type="password"
+                        placeholder="비밀번호"
+                        value={password}
+                        onChange={(e) => {setPassword(e.target.value); setError('');}}
+                        className="w-full bg-white border border-gray-200 py-4 px-6 unified-round text-base text-gray-800 placeholder-gray-400 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all shadow-sm"
+                    />
+                </div>
+                {error && <p className="text-red-500 text-xs font-medium px-2 animate-pulse">{error}</p>}
                 <button
-                    onClick={onClose}
-                    className="w-full bg-teal-500 text-white font-bold py-5 unified-round hover:bg-teal-600 active:scale-95 transition-all shadow-lg shadow-teal-100"
+                    onClick={handleSubmit}
+                    className="w-full bg-teal-500 text-white py-4 unified-round text-lg font-bold shadow-lg shadow-teal-50 active:scale-[0.98] transition-all mt-2"
                 >
-                    확인
+                    {isSignUp ? '가입하기' : '시작하기'}
+                </button>
+            </div>
+            
+            <div className="mt-8 text-center">
+                <button 
+                    onClick={() => {setIsSignUp(!isSignUp); setError('');}}
+                    className="text-gray-400 text-sm font-medium"
+                >
+                    {isSignUp ? '이미 계정이 있으신가요?' : '계정이 없으신가요?'} <span className="text-teal-500 font-bold underline underline-offset-4">{isSignUp ? '로그인' : '회원가입'}</span>
                 </button>
             </div>
         </div>
     );
-};
+}
 
-const SettingsModal = ({ isOpen, onClose, profile, setProfile }) => {
-    if (!isOpen) return null;
+function BoardTab() {
+    return (
+        <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <header className="pt-8 pb-4 px-2">
+                <h1 className="text-2xl font-bold text-gray-800">모두의 메시지</h1>
+                <p className="text-gray-400 text-sm">다른 사람들은 어떤 내일을 꿈꿀까요?</p>
+            </header>
+            
+            <div className="flex-1 overflow-y-auto space-y-4 pb-24 pr-1">
+                {BOARD_MESSAGES.map(msg => (
+                    <div key={msg.id} className="custom-card p-5 relative">
+                        <div className="flex justify-between items-center mb-3">
+                            <span className="text-teal-600 font-bold text-xs bg-teal-50 px-3 py-1 rounded-full">{msg.user}</span>
+                            <span className="text-gray-300 text-[10px]">{msg.date}</span>
+                        </div>
+                        <p className="text-gray-700 leading-relaxed font-medium text-sm">"{msg.text}"</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function LetterTab({ 
+    currentDate, setCurrentDate, isToday, messageFromYesterday, prompt, 
+    messageToSend, setMessageToSend, setIsTimePickerOpen, notificationTime, handleSaveMessage 
+}) {
+    return (
+        <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+            <header className="flex items-center justify-between w-full pt-8 mb-4">
+                <h1 className="text-2xl font-bold text-gray-800 tracking-tight">나의 편지함</h1>
+            </header>
+
+            <div className="flex items-center justify-between mb-4 custom-card p-1">
+                <button onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate()-1)))} className="p-2 text-gray-400 active:text-teal-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <div className="text-gray-800 font-bold text-base">{formatDateForDisplay(currentDate)}</div>
+                <button 
+                    onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate()+1)))}
+                    disabled={isToday}
+                    className={`p-2 transition-colors ${isToday ? 'opacity-20' : 'text-gray-400 active:text-teal-500'}`}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </button>
+            </div>
+
+            <main className="flex-1 flex flex-col space-y-4 overflow-hidden">
+                <section>
+                    <h2 className="text-[10px] font-bold text-gray-400 mb-2 px-1 uppercase tracking-widest">어제의 나로부터</h2>
+                    <div className="custom-card p-6 min-h-[100px] flex items-center justify-center relative overflow-hidden">
+                        <p className="text-base text-center font-medium leading-relaxed text-gray-600 italic">
+                            "{messageFromYesterday || prompt}"
+                        </p>
+                    </div>
+                </section>
+
+                <section className="flex-1 flex flex-col min-h-0">
+                    <h2 className="text-[10px] font-bold text-gray-400 mb-2 px-1 uppercase tracking-widest">내일의 나에게</h2>
+                    <div className="custom-card p-1 flex-1 flex flex-col overflow-hidden">
+                        <textarea
+                            value={messageToSend}
+                            onChange={(e) => setMessageToSend(e.target.value)}
+                            placeholder="내일의 너에게 하고 싶은 말..."
+                            className="w-full flex-1 bg-transparent p-6 text-base text-center placeholder-gray-300 border-0 focus:ring-0 resize-none font-medium text-gray-800"
+                        />
+                         <button
+                            onClick={() => setIsTimePickerOpen(true)}
+                            className="mx-3 mb-3 bg-gray-50 unified-round py-2.5 text-xs font-semibold text-gray-500 active:bg-gray-100 transition-colors flex items-center justify-center space-x-2 border border-gray-100"
+                        >
+                            <span>⏰</span>
+                            <span>{String(notificationTime.hour).padStart(2, '0')}:{String(notificationTime.minute).padStart(2, '0')} 전송 예약</span>
+                        </button>
+                    </div>
+                </section>
+                
+                <button
+                    onClick={handleSaveMessage}
+                    disabled={!messageToSend.trim()}
+                    className={`w-full bg-teal-500 text-white unified-round py-4 text-lg font-bold shadow-lg shadow-teal-50 transition-all active:scale-[0.98] mb-4 ${!messageToSend.trim() ? 'opacity-30 cursor-not-allowed' : 'hover:bg-teal-600'}`}
+                >
+                    편지 저장하기
+                </button>
+            </main>
+        </div>
+    );
+}
+
+function ProfileTab({ profile, setProfile, onLogout, messagesCount, userEmail }) {
     const fileInputRef = React.useRef(null);
     const handleImageChange = (event) => {
         if (event.target.files && event.target.files[0]) {
@@ -135,32 +289,59 @@ const SettingsModal = ({ isOpen, onClose, profile, setProfile }) => {
             reader.readAsDataURL(event.target.files[0]);
         }
     };
+
     return (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-center z-[100] p-4" onClick={onClose}>
-            <div className="bg-white unified-round p-8 w-full max-w-xs shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} className="absolute top-6 right-6 text-gray-300 hover:text-gray-800 active:scale-90 transition-transform">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-                <h3 className="text-xl font-bold text-gray-800 mb-8 text-center">나의 프로필</h3>
-                <div className="flex flex-col items-center">
-                    <div className="relative group">
-                        <div className="w-28 h-28 rounded-full overflow-hidden mb-6 border-4 border-teal-50 shadow-sm bg-gray-50 flex items-center justify-center">
-                            <img
-                                src={profile.imageUrl || DEFAULT_PROFILE_IMAGE}
-                                alt="Profile"
-                                className={`w-full h-full object-cover ${!profile.imageUrl ? 'scale-75 opacity-50' : ''}`}
-                            />
-                        </div>
-                        <button 
-                            onClick={() => fileInputRef.current?.click()}
-                            className="absolute bottom-6 right-0 bg-teal-500 text-white p-2 rounded-full shadow-lg border-2 border-white active:scale-90 transition-transform"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        </button>
+        <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+             <header className="pt-8 mb-6 flex justify-between items-center px-2">
+                <h1 className="text-2xl font-bold text-gray-800">마이 페이지</h1>
+                <button onClick={onLogout} className="text-gray-400 font-bold text-sm hover:text-red-400 transition-colors">로그아웃</button>
+            </header>
+
+            <div className="flex flex-col items-center mb-6">
+                <div className="relative mb-4">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-gray-50 flex items-center justify-center">
+                        <img
+                            src={profile.imageUrl || DEFAULT_PROFILE_IMAGE}
+                            alt="Profile"
+                            className={`w-full h-full object-cover ${!profile.imageUrl ? 'scale-75 opacity-30' : ''}`}
+                        />
                     </div>
+                    <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute bottom-0 right-0 bg-teal-500 text-white p-2 rounded-full shadow-lg border-2 border-white active:scale-90 transition-transform"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </button>
                     <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} className="hidden" />
-                    <p className="text-gray-400 text-sm mb-4">프로필 사진을 변경해 보세요</p>
                 </div>
+                <h2 className="text-lg font-bold text-gray-800">{userEmail.split('@')[0]}님</h2>
+                <p className="text-gray-400 text-xs mt-1">{userEmail}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="custom-card p-5 text-center">
+                    <p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-widest">보낸 편지</p>
+                    <p className="text-xl font-bold text-teal-600">{messagesCount}개</p>
+                </div>
+                <div className="custom-card p-5 text-center">
+                    <p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-widest">연속 일수</p>
+                    <p className="text-xl font-bold text-teal-600">3일</p>
+                </div>
+            </div>
+
+            <div className="flex-1 space-y-3 min-h-0 overflow-hidden">
+                <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-between px-6 text-gray-600 font-semibold active:bg-gray-50 transition-colors shadow-sm">
+                    <span className="flex items-center space-x-3 text-sm"><span>🔔</span> <span>알림 설정</span></span>
+                    <span className="text-gray-300">❯</span>
+                </button>
+                <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-between px-6 text-gray-600 font-semibold active:bg-gray-50 transition-colors shadow-sm">
+                    <span className="flex items-center space-x-3 text-sm"><span>💎</span> <span>프리미엄 혜택</span></span>
+                    <span className="text-gray-300">❯</span>
+                </button>
+                <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-between px-6 text-gray-600 font-semibold active:bg-gray-50 transition-colors shadow-sm">
+                    <span className="flex items-center space-x-3 text-sm"><span>📜</span> <span>공지사항</span></span>
+                    <span className="text-gray-300">❯</span>
+                </button>
             </div>
         </div>
     );
@@ -169,12 +350,14 @@ const SettingsModal = ({ isOpen, onClose, profile, setProfile }) => {
 function App() {
     const { useState, useEffect, useCallback } = React;
     
+    const [currentUser, setCurrentUser] = useState(null);
+    const [activeTab, setActiveTab] = useState('letter');
+    
     const [currentDate, setCurrentDate] = useState(new Date());
     const [messages, setMessages] = useState({});
     const [profile, setProfile] = useState({ imageUrl: null });
     const [notificationTime, setNotificationTime] = useState({ hour: 8, minute: 0 });
     const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [prompt, setPrompt] = useState('');
     const [messageToSend, setMessageToSend] = useState('');
     const [toast, setToast] = useState({ isVisible: false, message: '' });
@@ -184,27 +367,48 @@ function App() {
         setTimeout(() => setToast({ isVisible: false, message: '' }), 3000);
     };
 
-    const loadData = useCallback(() => {
-        try {
-            const storedMessages = localStorage.getItem('messages');
-            if (storedMessages) setMessages(JSON.parse(storedMessages));
-            const storedProfile = localStorage.getItem('profile');
-            if (storedProfile) setProfile(JSON.parse(storedProfile));
-            const storedTime = localStorage.getItem('notificationTime');
-            if (storedTime) setNotificationTime(JSON.parse(storedTime));
-        } catch (error) { console.error(error); }
+    useEffect(() => {
+        const savedSession = localStorage.getItem('currentUser');
+        if (savedSession) setCurrentUser(JSON.parse(savedSession));
+        setPrompt(MESSAGE_PROMPTS[Math.floor(Math.random() * MESSAGE_PROMPTS.length)]);
     }, []);
 
     useEffect(() => {
-        loadData();
-        setPrompt(MESSAGE_PROMPTS[Math.floor(Math.random() * MESSAGE_PROMPTS.length)]);
-    }, [loadData]);
+        if (!currentUser) return;
+        
+        try {
+            const userKey = currentUser.id;
+            const storedMessages = localStorage.getItem(`messages_${userKey}`);
+            if (storedMessages) setMessages(JSON.parse(storedMessages));
+            else setMessages({});
 
-    useEffect(() => { localStorage.setItem('messages', JSON.stringify(messages)); }, [messages]);
-    useEffect(() => { localStorage.setItem('profile', JSON.stringify(profile)); }, [profile]);
-    useEffect(() => { localStorage.setItem('notificationTime', JSON.stringify(notificationTime)); }, [notificationTime]);
+            const storedProfile = localStorage.getItem(`profile_${userKey}`);
+            if (storedProfile) setProfile(JSON.parse(storedProfile));
+            else setProfile({ imageUrl: null });
+
+            const storedTime = localStorage.getItem(`time_${userKey}`);
+            if (storedTime) setNotificationTime(JSON.parse(storedTime));
+            else setNotificationTime({ hour: 8, minute: 0 });
+        } catch (error) { console.error(error); }
+    }, [currentUser]);
 
     useEffect(() => {
+        if (!currentUser) return;
+        localStorage.setItem(`messages_${currentUser.id}`, JSON.stringify(messages));
+    }, [messages, currentUser]);
+
+    useEffect(() => {
+        if (!currentUser) return;
+        localStorage.setItem(`profile_${currentUser.id}`, JSON.stringify(profile));
+    }, [profile, currentUser]);
+
+    useEffect(() => {
+        if (!currentUser) return;
+        localStorage.setItem(`time_${currentUser.id}`, JSON.stringify(notificationTime));
+    }, [notificationTime, currentUser]);
+
+    useEffect(() => {
+        if (!currentUser) return;
         const todayKey = formatDate(new Date());
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -217,7 +421,7 @@ function App() {
                 [todayKey]: { ...prev[todayKey], fromYesterday: messages[yesterdayKey].toTomorrow }
             }));
         }
-    }, [messages]);
+    }, [messages, currentUser]);
     
     useEffect(() => {
         const todayKey = formatDate(currentDate);
@@ -240,100 +444,113 @@ function App() {
         showToast(`내일 ${String(notificationTime.hour).padStart(2,'0')}:${String(notificationTime.minute).padStart(2,'0')}에 전해줄게요.`);
     };
 
+    const handleLoginSuccess = (user) => {
+        setCurrentUser(user);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        showToast("환영합니다!");
+    };
+
+    const handleLogout = () => {
+        setCurrentUser(null);
+        localStorage.removeItem('currentUser');
+        setActiveTab('letter');
+    };
+
+    if (!currentUser) {
+        return (
+            <div className="h-full w-full overflow-hidden">
+                <Toast isVisible={toast.isVisible} message={toast.message} />
+                <AuthScreen onLoginSuccess={handleLoginSuccess} />
+            </div>
+        );
+    }
+
     const isToday = formatDate(currentDate) === formatDate(new Date());
     const messageFromYesterday = messages[formatDate(currentDate)]?.fromYesterday || '';
+    const messagesCount = Object.keys(messages).filter(k => messages[k].toTomorrow).length;
     
     return (
-        <div className="flex flex-col h-full w-full max-w-md mx-auto relative px-6 pt-10 pb-8 safe-area-inset-bottom">
+        <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto relative px-6 overflow-hidden">
             <Toast isVisible={toast.isVisible} message={toast.message} />
             
-            <header className="flex items-center justify-between w-full mb-8">
-                <div className="flex items-center space-x-3">
-                    <div 
-                        className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm active:scale-95 transition-transform bg-gray-50 flex items-center justify-center cursor-pointer"
-                        onClick={() => setIsSettingsOpen(true)}
-                    >
-                        <img
-                            src={profile.imageUrl || DEFAULT_PROFILE_IMAGE}
-                            alt="Profile"
-                            className={`w-full h-full object-cover ${!profile.imageUrl ? 'scale-75 opacity-30' : ''}`}
-                        />
-                    </div>
-                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">내일의 나에게</h1>
-                </div>
-                <SettingsIcon onClick={() => setIsSettingsOpen(true)} />
-            </header>
-
-            <div className="flex items-center justify-between mb-8 custom-card p-1">
-                <button onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate()-1)))} className="p-3 text-gray-400 active:text-teal-500 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                </button>
-                <div className="text-gray-800 font-bold text-lg">{formatDateForDisplay(currentDate)}</div>
-                <button 
-                    onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate()+1)))}
-                    disabled={isToday}
-                    className={`p-3 transition-colors ${isToday ? 'opacity-20' : 'text-gray-400 active:text-teal-500'}`}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                </button>
+            <div className="flex-1 overflow-hidden">
+                {activeTab === 'letter' && (
+                    <LetterTab 
+                        currentDate={currentDate}
+                        setCurrentDate={setCurrentDate}
+                        isToday={isToday}
+                        messageFromYesterday={messageFromYesterday}
+                        prompt={prompt}
+                        messageToSend={messageToSend}
+                        setMessageToSend={setMessageToSend}
+                        setIsTimePickerOpen={setIsTimePickerOpen}
+                        notificationTime={notificationTime}
+                        handleSaveMessage={handleSaveMessage}
+                    />
+                )}
+                {activeTab === 'board' && <BoardTab />}
+                {activeTab === 'profile' && (
+                    <ProfileTab 
+                        profile={profile} 
+                        setProfile={setProfile} 
+                        onLogout={handleLogout}
+                        messagesCount={messagesCount}
+                        userEmail={currentUser.email}
+                    />
+                )}
             </div>
 
-            <main className="flex-1 overflow-y-auto space-y-6 pb-4">
-                <section>
-                    <h2 className="text-xs font-bold text-gray-400 mb-3 px-1 uppercase tracking-widest">어제의 나로부터</h2>
-                    <div className="custom-card p-8 min-h-[140px] flex items-center justify-center relative overflow-hidden">
-                        <p className="text-lg text-center font-medium leading-relaxed text-gray-700 italic">
-                            "{messageFromYesterday || prompt}"
-                        </p>
-                    </div>
-                </section>
+            <nav className="tab-bar">
+                <button 
+                    onClick={() => setActiveTab('letter')}
+                    className={`flex flex-col items-center justify-center w-20 h-full transition-all duration-300 ${activeTab === 'letter' ? 'scale-110' : 'opacity-40 grayscale'}`}
+                >
+                    <span className="text-3xl mb-1">✉️</span>
+                    <span className={`text-[10px] font-bold ${activeTab === 'letter' ? 'text-teal-600' : 'text-gray-400'}`}>편지</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('board')}
+                    className={`flex flex-col items-center justify-center w-20 h-full transition-all duration-300 ${activeTab === 'board' ? 'scale-110' : 'opacity-40 grayscale'}`}
+                >
+                    <span className="text-3xl mb-1">📋</span>
+                    <span className={`text-[10px] font-bold ${activeTab === 'board' ? 'text-teal-600' : 'text-gray-400'}`}>게시판</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('profile')}
+                    className={`flex flex-col items-center justify-center w-20 h-full transition-all duration-300 ${activeTab === 'profile' ? 'scale-110' : 'opacity-40 grayscale'}`}
+                >
+                    <span className="text-3xl mb-1">👤</span>
+                    <span className={`text-[10px] font-bold ${activeTab === 'profile' ? 'text-teal-600' : 'text-gray-400'}`}>프로필</span>
+                </button>
+            </nav>
 
-                <section>
-                    <h2 className="text-xs font-bold text-gray-400 mb-3 px-1 uppercase tracking-widest">내일의 나에게</h2>
-                    <div className="custom-card p-1 flex flex-col overflow-hidden">
-                        <textarea
-                            value={messageToSend}
-                            onChange={(e) => setMessageToSend(e.target.value)}
-                            placeholder="내일의 너에게 하고 싶은 말..."
-                            className="w-full bg-transparent p-8 min-h-[180px] text-lg text-center placeholder-gray-300 border-0 focus:ring-0 resize-none font-medium"
-                        />
-                         <button
-                            onClick={() => setIsTimePickerOpen(true)}
-                            className="mx-4 mb-4 bg-gray-50 unified-round py-3 text-sm font-semibold text-gray-500 active:bg-gray-100 transition-colors flex items-center justify-center space-x-2"
+            {/* TimePicker Modal */}
+            <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-end z-[100] p-4 transition-opacity duration-300 ${isTimePickerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                {isTimePickerOpen && (
+                    <div className="bg-white unified-round p-6 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-300 mb-safe">
+                        <h3 className="text-lg font-bold text-gray-800 mb-6 text-center">전송 시간 설정</h3>
+                        <div className="flex justify-center items-center space-x-4 mb-8">
+                            <div className="flex flex-col items-center">
+                                <select value={notificationTime.hour} onChange={e => setNotificationTime({ ...notificationTime, hour: parseInt(e.target.value) })} className="bg-white border border-gray-200 unified-round px-5 py-3 text-xl font-bold text-gray-800 appearance-none text-center focus:ring-2 focus:ring-teal-400 shadow-sm">
+                                    {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}시</option>)}
+                                </select>
+                            </div>
+                            <span className="text-2xl font-bold text-gray-300">:</span>
+                            <div className="flex flex-col items-center">
+                                <select value={notificationTime.minute} onChange={e => setNotificationTime({ ...notificationTime, minute: parseInt(e.target.value) })} className="bg-white border border-gray-200 unified-round px-5 py-3 text-xl font-bold text-gray-800 appearance-none text-center focus:ring-2 focus:ring-teal-400 shadow-sm">
+                                    {Array.from({ length: 60 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}분</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setIsTimePickerOpen(false)}
+                            className="w-full bg-teal-500 text-white font-bold py-4 unified-round hover:bg-teal-600 active:scale-95 transition-all shadow-md shadow-teal-50"
                         >
-                            <span>⏰</span>
-                            <span>{String(notificationTime.hour).padStart(2, '0')}:{String(notificationTime.minute).padStart(2, '0')} 전송 예약됨</span>
+                            설정 완료
                         </button>
                     </div>
-                </section>
-            </main>
-
-            <footer className="mt-6 flex flex-col space-y-3">
-                <button
-                    onClick={handleSaveMessage}
-                    disabled={!messageToSend.trim()}
-                    className={`w-full bg-teal-500 text-white unified-round py-5 text-lg font-bold shadow-lg shadow-teal-50 transition-all active:scale-[0.98] ${!messageToSend.trim() ? 'opacity-30 cursor-not-allowed' : 'hover:bg-teal-600'}`}
-                >
-                    편지 저장하기
-                </button>
-                <button className="w-full bg-white border border-gray-100 unified-round py-4 flex items-center justify-center space-x-3 text-gray-400 font-semibold active:bg-gray-50 transition-colors">
-                    <span className="text-xl">🎁</span>
-                    <span className="text-sm">오늘 하루 수고했어</span>
-                </button>
-            </footer>
-
-            <TimePickerModal
-                isOpen={isTimePickerOpen}
-                onClose={() => setIsTimePickerOpen(false)}
-                time={notificationTime}
-                setTime={setNotificationTime}
-            />
-            <SettingsModal
-                isOpen={isSettingsOpen}
-                onClose={() => setIsSettingsOpen(false)}
-                profile={profile}
-                setProfile={setProfile}
-            />
+                )}
+            </div>
         </div>
     );
 }
